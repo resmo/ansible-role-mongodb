@@ -1,0 +1,82 @@
+---
+- name: place yum repo file
+  copy: src=mongodb-org-3.0.repo dest=/etc/yum.repos.d/mongodb-org-3.0.repo owner=root group=root mode=644
+
+- name: install mongodb packages
+  yum: name={{ item }} state=installed
+  with_items:
+  - mongodb-org
+  - python-pymongo
+  notify: restart mongodb
+
+- name: create the mongo data directory
+  file: path={{ mongo_datadir }} owner=mongod group=mongod state=directory
+
+- name: create the keyfile for authentication
+  template: src=secret.j2 dest={{ mongo_datadir }}/secret owner=mongod group=mongod mode=0400
+  notify: restart mongodb
+
+- name: create the mongodb configuration file
+  template: src=mongod.conf.j2 dest=/etc/mongod.conf
+  notify: restart mongodb
+
+- name: start mongodb
+  service: name=mongod state=started enabled=yes
+
+- name: wait for mongodb to be ready
+  wait_for: port={{ mongo_mongod_port }}
+
+- name: initiate the replication set
+  shell: echo "rs.initiate()" | /usr/bin/mongo --port '{{ mongo_mongod_port }}' && echo "Replica set {{ mongo_replica_set }} is initialized at $(date)" > /etc/mongo.repset.init creates=/etc/mongo.repset.init
+  register: mongo_initiated
+  when: mongo_manage_replica_set and mongo_init_node is defined and mongo_init_node
+
+- name: check status of cluster
+  shell: echo "rs.isMaster()" | /usr/bin/mongo --port '{{ mongo_mongod_port }}'
+  register: mongo_initiated_status
+  when: (mongo_manage_replica_set or mongo_manage_users) and mongo_init_node is defined and mongo_init_node and mongo_initiated is defined and mongo_initiated|success
+  until: mongo_initiated_status|skipped or mongo_initiated_status.stdout.find("primary") != -1
+  retries: 10
+  delay: 10
+
+- name: fail if primary node in not available
+  fail: msg="pimary node is not yet available, bootstrap or fix manually"
+  when: not mongo_initiated_status|skipped and mongo_initiated_status|success and "primary" not in mongo_initiated_status.stdout
+
+- name: create admin user
+  mongodb_user: database=admin name={{ mongo_admin_user }} password={{ mongo_admin_pass }} login_port={{ mongo_mongod_port }} roles='userAdmin,userAdminAnyDatabase' state=present
+  when: mongo_initiated is defined and mongo_initiated|changed
+
+- name: set mongo_init_node_name fact
+  set_fact: mongo_init_node_name={{hostvars[item]['ansible_nodename']}}
+  with_items: groups[mongo_group_name]
+  when: (mongo_manage_users or mongo_manage_replica_set) and hostvars[item]['mongo_init_node'] is defined
+
+- name: try to get mongo master
+  shell: echo "rs.isMaster().primary" | mongo --username '{{ mongo_admin_user }}' --password '{{ mongo_admin_pass }}' --host '{{ mongo_init_node_name }}' --quiet --port '{{ mongo_mongod_port }}' admin | cut -d":" -f1
+  register: mongo_master_out
+  when: mongo_manage_replica_set or mongo_manage_users
+
+- name: try to set mongo_master fact
+  set_fact: mongo_master={{ mongo_master_out.stdout }}
+  when: (mongo_manage_replica_set or mongo_manage_users) and mongo_master_out|success and mongo_master_out.stdout != ""
+
+- name: use init node as mongo_master as fallback
+  set_fact: mongo_master={{ mongo_init_node_name }}
+  when: mongo_master is not defined and (mongo_manage_users or mongo_manage_replica_set)
+
+- debug: var=mongo_master
+
+- name: add replica nodes
+  shell: echo "rs.add('{{ ansible_nodename }}:{{ mongo_mongod_port }}')" | /usr/bin/mongo --username '{{ mongo_admin_user }}' --password '{{ mongo_admin_pass }}' --host '{{ mongo_master }}' --port '{{ mongo_mongod_port }}' admin && echo "Node added to replica set {{ mongo_replica_set }} at $(date)" > /etc/mongo.repset.init creates=/etc/mongo.repset.init
+  when: mongo_manage_replica_set and mongo_arbiter is not defined and mongo_init_node is not defined
+  # arb is not defined or false
+
+- name: add arbiters
+  shell: echo "rs.addArb('{{ ansible_nodename }}:{{ mongo_mongod_port }}')" | /usr/bin/mongo --username '{{ mongo_admin_user }}' --password '{{ mongo_admin_pass }}' --host '{{ mongo_master }}' --port '{{ mongo_mongod_port }}' admin && echo "Node added to replica set {{ mongo_replica_set }} as arbiter at $(date)" > /etc/mongo.repset.init creates=/etc/mongo.repset.init
+  when: mongo_manage_replica_set and mongo_arbiter is defined and mongo_arbiter
+
+- name: add users/databases
+  mongodb_user: database={{ item.dbname }} name={{ item.user }} password={{ item.pass }} login_user={{ mongo_admin_user }} login_password={{ mongo_admin_pass }} login_port={{ mongo_mongod_port }} replica_set={{ mongo_replica_set }} state=present
+  when: mongo_manage_users and mongo_master == ansible_nodename and mongo_users is defined
+  with_items: mongo_users

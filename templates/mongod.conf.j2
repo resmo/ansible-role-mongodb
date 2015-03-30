@@ -1,0 +1,25 @@
+# {{ ansible_managed }}
+
+storage:
+  journal:
+    enabled: true
+  dbPath: "{{ mongo_datadir }}"
+  engine: wiredTiger
+systemLog:
+  path: "/var/log/mongodb/mongodb.log"
+  logAppend: true
+  destination: file
+processManagement:
+  fork: true
+  pidFilePath: "/var/run/mongodb/mongod.pid"
+net:
+  ssl:
+    mode: disabled
+  port: {{ mongo_mongod_port }}
+  http:
+    RESTInterfaceEnabled: true
+security:
+  keyFile: "{{ mongo_datadir }}/secret"
+  authorization: disabled
+replication:
+  replSetName: {{ mongo_replica_set }}

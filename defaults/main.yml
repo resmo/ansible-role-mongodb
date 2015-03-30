@@ -1,0 +1,12 @@
+---
+# control variables
+mongo_datadir: /data/mongo
+mongo_mongod_port: 27017
+mongo_manage_users: True
+mongo_manage_replica_set: True
+mongo_admin_user: admin
+mongo_admin_pass: topsecretpw
+
+
+# internal variables
+mongo_inited: False
