@@ -8,5 +8,5 @@ db.createUser(
       { role: "{{ role.role }}", db: "{{ role.db }}" },
       {% endfor %}
     ]
-}, { w: 0 });
+});
 {% endfor %}

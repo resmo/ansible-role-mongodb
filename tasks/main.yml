@@ -88,3 +88,4 @@
 - name: create mongo mongo users
   shell: /usr/bin/mongo --username {{ mongo_admin_user }}'' --password '{{ mongo_admin_pass }}' --host localhost --port '{{ mongo_mongod_port }}' admin /tmp/mongo_users.js
   when: mongo_users_status|changed
+  failed_when: False
