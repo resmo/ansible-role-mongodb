@@ -86,5 +86,5 @@
   when: mongo_manage_users and mongo_master == ansible_nodename and mongo_users is defined
 
 - name: create mongo mongo users
-  shell: /usr/bin/mongo --host localhost --port '{{ mongo_mongod_port }}' admin /tmp/mongo_users.js
+  shell: /usr/bin/mongo --username {{ mongo_admin_user }}'' --password '{{ mongo_admin_pass }}' --host localhost --port '{{ mongo_mongod_port }}' admin /tmp/mongo_users.js
   when: mongo_users_status|changed
