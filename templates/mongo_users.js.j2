@@ -1,6 +1,6 @@
 db.createUser(
 {
-    user: "{{ user }}",
-    pwd: "{{ pass }}",
-    roles: [ "{{ roles|join('", "') }}" ]
+    user: "{{ item.user }}",
+    pwd: "{{ item.pass }}",
+    roles: [ "{{ item.roles|join('", "') }}" ]
 });
