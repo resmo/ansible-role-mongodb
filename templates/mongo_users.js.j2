@@ -1,6 +1,9 @@
+{% for user in mongo_users %}
+use {{ user.dbname }}
 db.createUser(
 {
-    user: "{{ item.user }}",
-    pwd: "{{ item.pass }}",
-    roles: [ "{{ item.roles|join('", "') }}" ]
+    user: "{{ user.name }}",
+    pwd: "{{ user.pass }}",
+    roles: [ "{{ user.roles|join('", "') }}" ]
 });
+{% endfor %}

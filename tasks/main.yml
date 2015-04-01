@@ -61,6 +61,7 @@
   shell: echo "rs.isMaster().primary" | mongo --username '{{ mongo_admin_user }}' --password '{{ mongo_admin_pass }}' --host '{{ mongo_init_node_name }}' --quiet --port '{{ mongo_mongod_port }}' admin | cut -d":" -f1
   register: mongo_master_out
   when: mongo_manage_replica_set or mongo_manage_users
+  changed_when: False
 
 - name: try to set mongo_master fact
   set_fact: mongo_master={{ mongo_master_out.stdout }}
@@ -69,8 +70,6 @@
 - name: use init node as mongo_master as fallback
   set_fact: mongo_master={{ mongo_init_node_name }}
   when: mongo_master is not defined and (mongo_manage_users or mongo_manage_replica_set)
-
-- debug: var=mongo_master
 
 - name: add replica nodes
   shell: echo "rs.add('{{ ansible_nodename }}:{{ mongo_mongod_port }}')" | /usr/bin/mongo --username '{{ mongo_admin_user }}' --password '{{ mongo_admin_pass }}' --host '{{ mongo_master }}' --port '{{ mongo_mongod_port }}' admin && echo "Node added to replica set {{ mongo_replica_set }} at $(date)" > /etc/mongo.repset.init creates=/etc/mongo.repset.init
@@ -81,7 +80,11 @@
   shell: echo "rs.addArb('{{ ansible_nodename }}:{{ mongo_mongod_port }}')" | /usr/bin/mongo --username '{{ mongo_admin_user }}' --password '{{ mongo_admin_pass }}' --host '{{ mongo_master }}' --port '{{ mongo_mongod_port }}' admin && echo "Node added to replica set {{ mongo_replica_set }} as arbiter at $(date)" > /etc/mongo.repset.init creates=/etc/mongo.repset.init
   when: mongo_manage_replica_set and mongo_arbiter is defined and mongo_arbiter
 
-- name: add users/databases
+- name: create the file to initialize the mongo users
   template: src=mongo_users.js.j2 dest=/tmp/mongo_users.js mode=0700
+  register: mongo_users_status
   when: mongo_manage_users and mongo_master == ansible_nodename and mongo_users is defined
-  with_items: mongo_users
+
+- name: create mongo mongo users
+  shell: /usr/bin/mongo --host localhost --port '{{ mongo_mongod_port }}' admin /tmp/users.js
+  when: mongo_users_status|changed
