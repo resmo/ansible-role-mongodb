@@ -43,8 +43,12 @@
   fail: msg="pimary node is not yet available, bootstrap or fix manually"
   when: not mongo_initiated_status|skipped and mongo_initiated_status|success and "primary" not in mongo_initiated_status.stdout
 
+- name: Create the file to initialize the mongo admin user
+  template: src=adminuser.js.j2 dest=/tmp/admin.js mode=0700
+  when: mongo_initiated is defined and mongo_initiated|changed
+
 - name: create admin user
-  shell: echo "db.createUser({ user: \"{{ mongo_admin_user }}\", pwd: \"{{ mongo_admin_pass }}\", roles: [ 'userAdmin', 'userAdminAnyDatabase'] })" | mongo --host localhost admin
+  shell: /usr/bin/mongo --host localhost --port '{{ mongo_mongod_port }}'  admin /tmp/admin.js
   when: mongo_initiated is defined and mongo_initiated|changed
 
 - name: set mongo_init_node_name fact
