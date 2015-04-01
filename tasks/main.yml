@@ -38,6 +38,7 @@
   until: mongo_initiated_status|skipped or mongo_initiated_status.stdout.find("primary") != -1
   retries: 10
   delay: 10
+  changed_when: False
 
 - name: fail if primary node in not available
   fail: msg="pimary node is not yet available, bootstrap or fix manually"
