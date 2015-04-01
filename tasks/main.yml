@@ -44,7 +44,7 @@
   when: not mongo_initiated_status|skipped and mongo_initiated_status|success and "primary" not in mongo_initiated_status.stdout
 
 - name: create admin user
-  mongodb_user: database=admin name={{ mongo_admin_user }} password={{ mongo_admin_pass }} login_port={{ mongo_mongod_port }} roles='userAdmin,userAdminAnyDatabase' state=present
+  shell: echo "db.createUser({ user: '{{ mongo_admin_user }}', pwd: '{{ mongo_admin_pass }}', roles: [ 'userAdmin', 'userAdminAnyDatabase'] })" | mongo --host locashost admin
   when: mongo_initiated is defined and mongo_initiated|changed
 
 - name: set mongo_init_node_name fact
