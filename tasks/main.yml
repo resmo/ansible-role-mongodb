@@ -39,8 +39,6 @@
   retries: 10
   delay: 10
 
-- debug: var=mongo_initiated_status.stdout
-
 - name: fail if primary node in not available
   fail: msg="pimary node is not yet available, bootstrap or fix manually"
   when: not mongo_initiated_status|skipped and mongo_initiated_status|success and "primary" not in mongo_initiated_status.stdout
@@ -84,6 +82,6 @@
   when: mongo_manage_replica_set and mongo_arbiter is defined and mongo_arbiter
 
 - name: add users/databases
-  mongodb_user: database={{ item.dbname }} name={{ item.user }} password={{ item.pass }} login_user={{ mongo_admin_user }} login_password={{ mongo_admin_pass }} login_port={{ mongo_mongod_port }} replica_set={{ mongo_replica_set }} state=present
+  mongodb_user: database={{ item.dbname }} name={{ item.user }} password={{ item.pass }} login_user={{ mongo_admin_user }} login_password={{ mongo_admin_pass }} login_port={{ mongo_mongod_port }} login_host=localhost state=present
   when: mongo_manage_users and mongo_master == ansible_nodename and mongo_users is defined
   with_items: mongo_users
