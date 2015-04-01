@@ -4,7 +4,7 @@ db.createUser(
     user: "{{ user.name }}",
     pwd: "{{ user.pass }}",
     roles: [
-      {% for role in roles -%}
+      {% for role in user.roles -%}
       { role: {{ role.role }}, db: {{ role.db }} },
       {% endfor %}
     ]
