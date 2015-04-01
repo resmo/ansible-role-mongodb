@@ -39,6 +39,8 @@
   retries: 10
   delay: 10
 
+- debug: var=mongo_initiated_status.stdout
+
 - name: fail if primary node in not available
   fail: msg="pimary node is not yet available, bootstrap or fix manually"
   when: not mongo_initiated_status|skipped and mongo_initiated_status|success and "primary" not in mongo_initiated_status.stdout
