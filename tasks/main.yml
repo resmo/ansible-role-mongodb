@@ -82,11 +82,13 @@
   when: mongo_manage_replica_set and mongo_arbiter is defined and mongo_arbiter
 
 - name: create the file to initialize the mongo users
-  template: src=mongo_users.js.j2 dest=/tmp/mongo_users.js mode=0700
+  template: src=mongo_users.js.j2 dest=/tmp/mongo_{{ item.name }}_users.js mode=0700
+  with_items: mongo_databases
   register: mongo_users_status
-  when: mongo_manage_users and mongo_master == ansible_nodename and mongo_users is defined
+  when: mongo_manage_users and mongo_master == ansible_nodename and mongo_databases is defined
 
 - name: create mongo mongo users
-  shell: /usr/bin/mongo --username {{ mongo_admin_user }}'' --password '{{ mongo_admin_pass }}' --host localhost --port '{{ mongo_mongod_port }}' admin /tmp/mongo_users.js
+  shell: /usr/bin/mongo --username {{ mongo_admin_user }}'' --password '{{ mongo_admin_pass }}' --host localhost --port '{{ mongo_mongod_port }}' --authenticationDatabase admin '{{ item.name }}' /tmp/mongo_{{ item.name }}_users.js
   when: mongo_users_status|changed
   failed_when: False
+  with_items: mongo_users

@@ -1,5 +1,4 @@
-{% for user in mongo_users %}
-use {{ user.db }};
+{% for user in item.users %}
 db.createUser(
 {
     user: "{{ user.name }}",
