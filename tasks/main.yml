@@ -91,4 +91,4 @@
   shell: /usr/bin/mongo --username {{ mongo_admin_user }}'' --password '{{ mongo_admin_pass }}' --host localhost --port '{{ mongo_mongod_port }}' --authenticationDatabase admin '{{ item.name }}' /tmp/mongo_{{ item.name }}_users.js
   when: mongo_users_status|changed
   failed_when: False
-  with_items: mongo_users
+  with_items: mongo_databases
