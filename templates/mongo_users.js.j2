@@ -1,4 +1,5 @@
 {% for user in mongo_users %}
+use {{ user.db }};
 db.createUser(
 {
     user: "{{ user.name }}",
