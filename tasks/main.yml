@@ -4,16 +4,21 @@
 
 - name: install mongodb packages
   yum: name={{ item }} state=installed
+  register: mongo_installed
   with_items:
   - mongodb-org
   - python-pymongo
+
+- name: replace init script
+  copy: src=mongod dest=/etc/init.d/mongod owner=root group=root mode=644 
+  when:  mongo_initiated|changed
   notify: restart mongodb
 
 - name: create tuned profile directory
   file: path=/usr/lib/tuned/mongod owner=root group=root state=directory
 
 - name: create tuned profile
-  copy:  src=mongod_tuned.conf dest=/usr/lib/tuned/mongod/tuned.conf owner=root group=root mode=644 
+  copy: src=mongod_tuned.conf dest=/usr/lib/tuned/mongod/tuned.conf owner=root group=root mode=644 
 
 - name: create the mongo data directory
   file: path={{ mongo_datadir }} owner=mongod group=mongod state=directory
