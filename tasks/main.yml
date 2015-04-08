@@ -9,6 +9,9 @@
   - python-pymongo
   notify: restart mongodb
 
+- name: create tuned profile
+  copy:  src=mongod_tuned.conf dest=/usr/lib/tuned/mongod/tuned.conf owner=root group=root mode=644 
+
 - name: create the mongo data directory
   file: path={{ mongo_datadir }} owner=mongod group=mongod state=directory
 
