@@ -11,7 +11,7 @@
 
 - name: replace init script
   copy: src=mongod dest=/etc/init.d/mongod owner=root group=root mode=644 
-  when:  mongo_initiated|changed
+  when:  mongo_installed|changed
   notify: restart mongodb
 
 - name: create tuned profile directory
