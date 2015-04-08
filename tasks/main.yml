@@ -23,7 +23,7 @@
 
 - name: load tuned profile
   shell: tuned-adm profile mongod
-  when: mongo_initiated|changed
+  when: mongo_tuned_profile|changed
 
 - name: update nproc limits
   copy: src=20-nproc.conf dest=/etc/security/limits.d/20-nproc.conf owner=root group=root mode=644
