@@ -73,7 +73,7 @@
   when: mongo_initiated is defined and mongo_initiated|changed
 
 - name: set mongo_init_node_name fact
-Rll
+  set_fact: mongo_init_node_name={{hostvars[item]['ansible_nodename']}}
   with_items: groups[mongo_group_name]
   when: (mongo_manage_users or mongo_manage_replica_set) and hostvars[item]['mongo_init_node'] is defined
 
