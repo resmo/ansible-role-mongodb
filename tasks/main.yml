@@ -19,7 +19,7 @@
 
 - name: create tuned profile
   register: mongo_tuned_profile
-  copy: src=mongod_tuned.conf dest=/usr/lib/tuned/mongod/tuned.conf owner=root group=root mode=644 
+  copy: src=mongod_tuned.conf dest=/usr/lib/tuned/mongod/tuned.conf owner=root group=root mode=644
 
 - name: load tuned profile
   shell: tuned-adm profile mongod
@@ -73,7 +73,7 @@
   when: mongo_initiated is defined and mongo_initiated|changed
 
 - name: set mongo_init_node_name fact
-  set_fact: mongo_init_node_name={{hostvars[item]['ansible_nodename']}}
+Rll
   with_items: groups[mongo_group_name]
   when: (mongo_manage_users or mongo_manage_replica_set) and hostvars[item]['mongo_init_node'] is defined
 
@@ -104,10 +104,10 @@
   template: src=mongo_users.js.j2 dest=/tmp/mongo_{{ item.name }}_users.js mode=0700
   with_items: mongo_databases
   register: mongo_users_status
-  when: mongo_manage_users and mongo_master == ansible_nodename and mongo_databases is defined
+  when: mongo_manage_users and mongo_databases is defined
 
 - name: create mongo mongo users
   shell: /usr/bin/mongo --username {{ mongo_admin_user }}'' --password '{{ mongo_admin_pass }}' --host localhost --port '{{ mongo_mongod_port }}' --authenticationDatabase admin '{{ item.name }}' /tmp/mongo_{{ item.name }}_users.js
-  when: mongo_users_status|changed
+  when: mongo_users_status|changed and mongo_master == ansible_nodename
   failed_when: False
   with_items: mongo_databases
