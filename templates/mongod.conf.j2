@@ -16,8 +16,6 @@ net:
   ssl:
     mode: disabled
   port: {{ mongo_mongod_port }}
-  http:
-    RESTInterfaceEnabled: true
 security:
   keyFile: {{ mongo_datadir }}/secret
   authorization: disabled
