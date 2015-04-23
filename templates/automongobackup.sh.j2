@@ -44,7 +44,7 @@ DBAUTHDB="admin"
 DBHOST="{{ mongo_backup_source }}"
 
 # Port that mongo is listening on
-DBPORT="27017"
+DBPORT="{{ mongo_mongod_port }}"
 
 # Backup directory location e.g /backups
 BACKUPDIR="{{ mongo_backup_destination }}"
