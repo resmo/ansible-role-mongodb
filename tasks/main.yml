@@ -102,7 +102,7 @@
 
 - name: create the file to initialize the mongo users
   template: src=mongo_users.js.j2 dest=/tmp/mongo_{{ item.name }}_users.js mode=0700
-  with_items: mongo_databases
+  with_items: "{{mongo_databases}}"
   register: mongo_users_status
   when: mongo_manage_users and mongo_databases is defined
 
@@ -110,7 +110,7 @@
   shell: /usr/bin/mongo --username {{ mongo_admin_user }}'' --password '{{ mongo_admin_pass }}' --host localhost --port '{{ mongo_mongod_port }}' --authenticationDatabase admin '{{ item.name }}' /tmp/mongo_{{ item.name }}_users.js
   when: mongo_users_status|changed and mongo_master == ansible_nodename
   failed_when: False
-  with_items: mongo_databases
+  with_items: "{{mongo_databases}}"
 
 - name: create folder for backup script
   file: path=/opt/automongobackup owner=root group=root state=directory
