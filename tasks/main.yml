@@ -64,7 +64,6 @@
   when: not mongo_initiated_status|skipped and mongo_initiated_status|success and "primary" not in mongo_initiated_status.stdout
 
 - name: create the file to initialize the mongo admin user
-  when: mongo_initiated is defined and mongo_initiated|changed
   template: src=adminuser.js.j2 dest=/tmp/adminuser.js mode=0700
   when: mongo_initiated is defined and mongo_initiated|changed
 
@@ -106,24 +105,11 @@
   register: mongo_users_status
   when: mongo_manage_users and mongo_databases is defined
 
-- name: create mongo mongo users
+- name: create mongo users
   shell: /usr/bin/mongo --username {{ mongo_admin_user }}'' --password '{{ mongo_admin_pass }}' --host localhost --port '{{ mongo_mongod_port }}' --authenticationDatabase admin '{{ item.name }}' /tmp/mongo_{{ item.name }}_users.js
   when: mongo_users_status|changed and mongo_master == ansible_nodename
   failed_when: False
   with_items: "{{mongo_databases}}"
 
-- name: create folder for backup script
-  file: path=/opt/automongobackup owner=root group=root state=directory
-  when: mongo_backup_node is defined and mongo_backup_node
-
-- name: create backup destination
-  file: path={{ mongo_backup_destination }} owner=root group=root state=directory
-  when: mongo_backup_node is defined and mongo_backup_node
-
-- name: render backup script
-  template: src=automongobackup.sh.j2 dest=/opt/automongobackup/automongobackup.sh mode=0700
-  when: mongo_backup_node is defined and mongo_backup_node
-
-- name: create symlink to cron
-  file: src=/opt/automongobackup/automongobackup.sh dest=/etc/cron.daily/automongobackup owner=root group=root state=link
-  when: mongo_backup_node is defined and mongo_backup_node
+- include: automongobackup.yml
+  tags: [backup, automongobackup]
