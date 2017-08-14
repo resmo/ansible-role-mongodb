@@ -1,18 +1,29 @@
 ---
 - name: place yum repo file
-  copy: src=mongodb-org-3.0.repo dest=/etc/yum.repos.d/mongodb-org-3.0.repo owner=root group=root mode=644
+  template:
+    src: mongodb-org-3.repo
+    dest: /etc/yum.repos.d/mongodb-org-{{mongo_version}}.repo
+    owner: root
+    group: root
+    mode: 644
 
 - name: install mongodb packages
-  yum: name={{ item }} state=installed
+  yum:
+    name: "{{ item }}"
+    state: "{{ mongo_pkg_state }}"
   register: mongo_installed
   with_items:
-  - mongodb-org
-  - python-pymongo
+    - mongodb-org
+    - python-pymongo
 
 - name: replace init script
   copy: src=mongod dest=/etc/init.d/mongod owner=root group=root mode=755
   when:  mongo_installed|changed
   notify: restart mongodb
+
+- name: reload systemd if needed
+  when: mongo_installed|changed
+  shell: systemctl daemon-reload
 
 - name: create tuned profile directory
   file: path=/usr/lib/tuned/mongod owner=root group=root state=directory
@@ -81,6 +92,7 @@
   register: mongo_master_out
   when: mongo_manage_replica_set or mongo_manage_users
   changed_when: False
+  check_mode: false
 
 - name: try to set mongo_master fact
   set_fact: mongo_master={{ mongo_master_out.stdout }}
