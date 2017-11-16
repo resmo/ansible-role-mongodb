@@ -14,7 +14,7 @@ None.
       remote_user: root
 
       roles:
-      - sontags.mongodb
+      - mongodb
 
       pre_tasks:
       - name: get mongo_group_name
@@ -25,7 +25,6 @@ None.
       - name: get mongo_replica_set
         set_fact: mongo_replica_set="{{ mongo_group_name }}"
         when: mongo_replica_set is not defined
-
 ```
 
 ## License
