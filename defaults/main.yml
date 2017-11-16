@@ -1,6 +1,6 @@
 ---
 # control variables
-mongo_version: 3.2
+mongo_version: 3.4
 mongo_pkg_state: latest
 mongo_datadir: /data/mongo
 mongo_mongod_port: 27017
